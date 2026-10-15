@@ -5,6 +5,8 @@ Kafka. Each flight controller's console gets exactly the view it needs, and
 only the flight director may uplink commands to the crew. Governance keeps the mission's topics in
 order, and everything is managed from **kawa studio**.
 
+![Mission control: the spacecraft streams through kawa gateway, which serves filtered virtual topics to the systems and navigator consoles and lets only the flight director uplink commands](docs/mission-control.svg)
+
 The demo shows **SASL clients**, **RBAC**, **filtered virtual topics (JSON and Avro)** and **governance rules**,
 with live data. There are two ways to run it, and both tell the same story:
 
@@ -25,9 +27,8 @@ first start only, so on an existing stack run `make compose-down` first.
 - For minikube: `minikube`, `kubectl`, `helm` and `envsubst` (`brew install gettext`). The chart is
   installed from a `../kawa-charts` checkout next to this repo.
 
-## What the demo sets up
-
-![Mission control: the spacecraft streams through kawa gateway, which serves filtered virtual topics to the systems and navigator consoles and lets only the flight director uplink commands](docs/mission-control.svg)
+## Resources
+### Topics
 
 **Physical topics.** An init job creates them on the broker:
 
@@ -42,6 +43,8 @@ first start only, so on an existing stack run `make compose-down` first.
 - `telemetry.alerts` over `telemetry.raw` keeps `value.severity in ["warning", "critical"]`.
 - `navigation.artemis` over `navigation.raw` keeps `value.craft == "artemis-3"`. The gateway
   decodes the Avro values with the schema registry before filtering them.
+ 
+### Clients
 
 **SASL clients.** The password is `<name>-secret`, and each client's consumer groups are
 `<name>.*`.
