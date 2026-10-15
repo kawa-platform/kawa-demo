@@ -1,0 +1,24 @@
+# kawa chart overrides for the minikube demo. Image repositories and tags are not set here:
+# k8s/up.sh passes them from versions.env.
+
+# The studio 0.1.0-rc.1 image calls the admin API at http://localhost:8080 from the browser, so the
+# demo is reached through port-forwards (k8s/forward.sh): studio on 5173, the admin API on 8080.
+publicUrl: http://localhost:5173
+
+gateway:
+  image:
+    pullPolicy: IfNotPresent   # the private ghcr images are loaded into minikube by up.sh
+  kafka:
+    bootstrapServers: [kafka:9092]
+  admin:
+    auth:
+      password: admin          # demo only: the bootstrap admin is admin@kawa / admin
+  config:
+    clusters:
+      default:
+        schemaRegistry:
+          url: http://schema-registry:8081
+
+studio:
+  image:
+    pullPolicy: IfNotPresent

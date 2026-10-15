@@ -1,0 +1,39 @@
+# Startup config of the compose demo's gateway. Everything dynamic (virtual topics, SASL clients,
+# RBAC, governance) is loaded at runtime by scripts/seed.sh and scripts/governance.sh.
+listeners:
+  - host: 0.0.0.0
+    port: 9092
+
+clusters:
+  default:
+    bootstrapServers:
+      - kafka:9092
+    # Used by virtual topics with valueFormat avro (navigation.artemis).
+    schemaRegistry:
+      url: http://schema-registry:8081
+
+# What clients are told to connect to. localhost:9092 works for clients on the host and for the
+# demo's tool containers, which share the gateway's network namespace.
+advertised:
+  nodeId: 1
+  host: localhost
+  port: 9092
+
+admin:
+  enabled: true
+  host: 0.0.0.0
+  port: 8080
+  # Login: admin@kawa / $KAWA_ADMIN_PASSWORD (default admin) through kawa studio. Tokens are
+  # signed with a key generated at startup, so after a gateway restart just log in again.
+  auth:
+    type: oauth
+    bootstrapUser:
+      username: admin@kawa
+      password: ${KAWA_ADMIN_PASSWORD:-admin}
+    settings:
+      loginUrl: http://localhost:5173/admin/login
+      redirectUris:
+        - http://localhost:5173/admin/auth/callback
+  cors:
+    allowedOrigins:
+      - http://localhost:5173

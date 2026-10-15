@@ -1,0 +1,108 @@
+# The demo workloads around the kawa chart: the spacecraft and two tool pods
+# to exec demo commands in. Applied after the seed Job (k8s/seed.yaml) has completed, so the
+# spacecraft's SASL client and grants exist when it connects. Scripts, client configs and the schema
+# come from ConfigMaps that k8s/up.sh builds from ../scripts, ../clients and ../schemas.
+# ${...} placeholders are filled from versions.env by k8s/up.sh (envsubst).
+# The spacecraft (client spacecraft): streams JSON telemetry to telemetry.raw through the gateway
+# and receives the commands uplinked to commands.uplink.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kawa-spacecraft
+  labels: {app.kubernetes.io/name: kawa-spacecraft, app.kubernetes.io/part-of: kawa-demo}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: kawa-spacecraft}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: kawa-spacecraft, app.kubernetes.io/part-of: kawa-demo}
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: spacecraft
+          image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/demo/scripts/spacecraft.sh"]
+          env:
+            - {name: BOOTSTRAP, value: "kawa-gateway:9092"}
+          volumeMounts:
+            - {name: scripts, mountPath: /demo/scripts}
+            - {name: clients, mountPath: /demo/clients}
+            - {name: schemas, mountPath: /demo/schemas}
+      volumes:
+        - name: scripts
+          configMap: {name: kawa-demo-scripts, defaultMode: 0755}
+        - name: clients
+          configMap: {name: kawa-demo-clients}
+        - name: schemas
+          configMap: {name: kawa-demo-schemas}
+---
+# Kafka CLI tools: kubectl -n kawa-demo exec deploy/kawa-tools -- /demo/scripts/consume.sh
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kawa-tools
+  labels: {app.kubernetes.io/name: kawa-tools, app.kubernetes.io/part-of: kawa-demo}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: kawa-tools}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: kawa-tools, app.kubernetes.io/part-of: kawa-demo}
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: tools
+          image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c", "trap 'exit 0' TERM; while true; do sleep 3600 & wait $!; done"]
+          env:
+            - {name: BOOTSTRAP, value: "kawa-gateway:9092"}
+          volumeMounts:
+            - {name: scripts, mountPath: /demo/scripts}
+            - {name: clients, mountPath: /demo/clients}
+            - {name: schemas, mountPath: /demo/schemas}
+      volumes:
+        - name: scripts
+          configMap: {name: kawa-demo-scripts, defaultMode: 0755}
+        - name: clients
+          configMap: {name: kawa-demo-clients}
+        - name: schemas
+          configMap: {name: kawa-demo-schemas}
+---
+# Avro CLI tools (kafka-avro-console-producer / -consumer) from the schema registry image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kawa-avro-tools
+  labels: {app.kubernetes.io/name: kawa-avro-tools, app.kubernetes.io/part-of: kawa-demo}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: kawa-avro-tools}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: kawa-avro-tools, app.kubernetes.io/part-of: kawa-demo}
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: avro-tools
+          image: ${SCHEMA_REGISTRY_IMAGE}:${SCHEMA_REGISTRY_VERSION}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c", "trap 'exit 0' TERM; while true; do sleep 3600 & wait $!; done"]
+          env:
+            - {name: BOOTSTRAP, value: "kawa-gateway:9092"}
+            - {name: SCHEMA_REGISTRY_URL, value: "http://schema-registry:8081"}
+          volumeMounts:
+            - {name: scripts, mountPath: /demo/scripts}
+            - {name: clients, mountPath: /demo/clients}
+            - {name: schemas, mountPath: /demo/schemas}
+      volumes:
+        - name: scripts
+          configMap: {name: kawa-demo-scripts, defaultMode: 0755}
+        - name: clients
+          configMap: {name: kawa-demo-clients}
+        - name: schemas
+          configMap: {name: kawa-demo-schemas}

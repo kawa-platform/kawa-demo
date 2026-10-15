@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 640" width="1040" height="640" role="img" aria-labelledby="title desc">
+  <title id="title">kawa-demo: mission control</title>
+  <desc id="desc">The spacecraft streams telemetry and Avro state vectors through kawa gateway. The gateway serves filtered virtual topics to the systems and navigator consoles, lets only the flight director uplink commands, and is managed from kawa studio through the admin API. Kafka and a schema registry sit behind the gateway.</desc>
+  <style>
+    /* kawa-design tokens (tokens.css): dark by default, like kawa studio; light follows the viewer's theme. */
+    svg {
+      --bg: #020b18; --surface: #07182b; --elevated: #0c2238; --line: rgba(173, 192, 210, .13); --divider: #19344b;
+      --text: #ffffff; --muted: #adc0d2;
+      --accent: #22d3ee; --accent-soft: #07293a; --brand: #c9a227; --on-brand: #020b18;
+      --warning: #fbbf24; --warning-soft: rgba(251, 191, 36, .08); --warning-line: rgba(251, 191, 36, .45);
+      --danger: #f87171; --code: #e18bb7; --flow: rgba(173, 192, 210, .45);
+      --glow-1: rgba(34, 211, 238, .10); --glow-2: rgba(201, 162, 39, .08);
+    }
+    @media (prefers-color-scheme: light) {
+      svg {
+        --bg: #eef2f7; --surface: #ffffff; --elevated: #f1f5f9; --line: rgba(11, 26, 46, .09); --divider: #dbe2ea;
+        --text: #020617; --muted: #475569;
+        --accent: #0891b2; --accent-soft: #e0f2fe; --brand: #f5c518; --on-brand: #0f172a;
+        --warning: #b45309; --warning-soft: rgba(217, 119, 6, .07); --warning-line: rgba(217, 119, 6, .45);
+        --danger: #dc2626; --code: #b0457c; --flow: rgba(71, 85, 105, .45);
+        --glow-1: rgba(8, 145, 178, .07); --glow-2: rgba(245, 197, 24, .09);
+      }
+    }
+    text { font-family: Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; fill: var(--text); }
+    .mono, .pill-t, .code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .bg { fill: var(--bg); }
+    .card { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+    .row { fill: var(--elevated); stroke: var(--line); stroke-width: 1; }
+    .tile { fill: var(--elevated); stroke: var(--line); stroke-width: 1; }
+    .ico { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-warn { fill: none; stroke: var(--warning); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .brand { fill: var(--brand); }
+    .brand-t { fill: var(--on-brand); font-size: 21px; font-weight: 600; }
+    .h1 { font-size: 17px; font-weight: 600; }
+    .h { font-size: 15px; font-weight: 600; }
+    .d { font-size: 12.5px; fill: var(--muted); }
+    .sec { font-size: 10.5px; font-weight: 500; letter-spacing: .09em; fill: var(--muted); }
+    .sec-v { font-size: 10.5px; font-weight: 500; letter-spacing: .09em; fill: var(--accent); }
+    .mono { font-size: 13.5px; }
+    .code { font-size: 11px; fill: var(--code); }
+    .pill { fill: var(--elevated); }
+    .pill-t { font-size: 11px; fill: var(--muted); }
+    .link { fill: var(--accent-soft); }
+    .link-t { font-size: 11.5px; font-weight: 500; fill: var(--accent); }
+    .dot { fill: var(--brand); }
+    .divider { stroke: var(--divider); stroke-width: 1; }
+    .knob { fill: var(--surface); stroke: var(--line); }
+    .flow { fill: none; stroke: var(--flow); stroke-width: 1.5; }
+    .flow-v { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+    .dash { fill: none; stroke: var(--flow); stroke-width: 1.4; stroke-dasharray: 4 4; }
+    .deny { fill: none; stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .deny-t { font-size: 11.5px; font-weight: 500; fill: var(--danger); }
+    .warn-box { fill: var(--warning-soft); stroke: var(--warning-line); stroke-width: 1; }
+    .warn-t { font-size: 11.5px; fill: var(--warning); }
+    .head { fill: var(--flow); } .head-v { fill: var(--accent); } .head-d { fill: var(--danger); }
+    .g1 { stop-color: var(--glow-1); } .g1-end { stop-color: var(--glow-1); stop-opacity: 0; }
+    .g2 { stop-color: var(--glow-2); } .g2-end { stop-color: var(--glow-2); stop-opacity: 0; }
+  </style>
+  <defs>
+    <radialGradient id="glow1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 40) scale(560 380)">
+      <stop offset="0" class="g1"/><stop offset="1" class="g1-end"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(940 620) scale(560 360)">
+      <stop offset="0" class="g2"/><stop offset="1" class="g2-end"/>
+    </radialGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="av" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="head-v" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="head-d" d="M0,0 L10,5 L0,10 z"/></marker>
+    <!-- lucide-style icons, 24x24, as in kawa studio -->
+    <symbol id="i-satellite" viewBox="0 0 24 24"><path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></symbol>
+    <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+    <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+  </defs>
+
+  <!-- canvas with studio's soft cyan / gold glow -->
+  <rect class="bg" width="1040" height="640" rx="18"/>
+  <rect fill="url(#glow1)" width="1040" height="640" rx="18"/>
+  <rect fill="url(#glow2)" width="1040" height="640" rx="18"/>
+
+  <!-- header, like studio's sidebar brand -->
+  <rect class="brand" x="32" y="28" width="40" height="40" rx="10"/>
+  <text class="brand-t" x="52" y="56" text-anchor="middle">川</text>
+  <text class="h1" x="86" y="45">kawa</text>
+  <text class="d" x="86" y="62">Mission control demo</text>
+
+  <!-- ───── left: who writes ───── -->
+  <rect class="card" x="32" y="172" width="220" height="166" rx="16"/>
+  <rect class="tile" x="50" y="190" width="36" height="36" rx="10"/>
+  <use href="#i-satellite" class="ico" x="58" y="198" width="20" height="20"/>
+  <text class="h" x="98" y="206">spacecraft</text>
+  <rect class="pill" x="98" y="213" width="114" height="18" rx="6"/>
+  <text class="pill-t" x="105" y="226">flight computer</text>
+  <text class="sec" x="50" y="260">STREAMS</text>
+  <text class="d" x="50" y="282">JSON telemetry, 1 per second</text>
+  <text class="d" x="50" y="302">Avro state vectors</text>
+  <text class="sec" x="50" y="324">RECEIVES</text>
+  <text class="d" x="122" y="324">uplinked commands</text>
+
+  <rect class="card" x="32" y="348" width="220" height="76" rx="16"/>
+  <rect class="tile" x="50" y="368" width="36" height="36" rx="10"/>
+  <use href="#i-user" class="ico" x="58" y="376" width="20" height="20"/>
+  <text class="h" x="98" y="382">director</text>
+  <text class="d" x="98" y="400">flight director: reads all,</text>
+  <text class="d" x="98" y="415">uplinks, opens topics</text>
+
+  <!-- ───── gateway ───── -->
+  <rect class="card" x="284" y="96" width="484" height="400" rx="16"/>
+  <rect class="brand" x="304" y="114" width="36" height="36" rx="10"/>
+  <text class="brand-t" x="322" y="139" text-anchor="middle" style="font-size: 19px">川</text>
+  <text class="h" x="352" y="129">kawa gateway</text>
+  <rect class="pill" x="352" y="136" width="146" height="18" rx="6"/>
+  <text class="pill-t" x="359" y="149">:9092 · SASL PLAIN</text>
+
+  <!-- row 1: telemetry -->
+  <rect class="row" x="304" y="172" width="444" height="76" rx="10"/>
+  <text class="sec" x="320" y="196">PHYSICAL</text>
+  <text class="mono" x="320" y="220">telemetry.raw</text>
+  <path class="flow-v" d="M440,210 H516" marker-end="url(#av)"/>
+  <circle class="knob" cx="476" cy="210" r="11"/>
+  <use href="#i-funnel" class="ico" x="469" y="203" width="14" height="14"/>
+  <text class="sec-v" x="528" y="196">VIRTUAL · JSON</text>
+  <text class="mono" x="528" y="218">telemetry.alerts</text>
+  <text class="code" x="528" y="236">severity in [warning, critical]</text>
+
+  <!-- row 2: navigation -->
+  <rect class="row" x="304" y="260" width="444" height="76" rx="10"/>
+  <text class="sec" x="320" y="284">PHYSICAL · AVRO</text>
+  <text class="mono" x="320" y="308">navigation.raw</text>
+  <path class="flow-v" d="M440,298 H516" marker-end="url(#av)"/>
+  <circle class="knob" cx="476" cy="298" r="11"/>
+  <use href="#i-funnel" class="ico" x="469" y="291" width="14" height="14"/>
+  <text class="sec-v" x="528" y="284">VIRTUAL · AVRO, DECODED</text>
+  <text class="mono" x="528" y="306">navigation.artemis</text>
+  <text class="code" x="528" y="324">craft == "artemis-3"</text>
+
+  <!-- row 3: commands -->
+  <rect class="row" x="304" y="348" width="444" height="76" rx="10"/>
+  <text class="sec" x="320" y="372">PHYSICAL</text>
+  <text class="mono" x="320" y="396">commands.uplink</text>
+  <rect class="warn-box" x="460" y="360" width="276" height="52" rx="8"/>
+  <use href="#i-alert" class="ico-warn" x="472" y="368" width="15" height="15"/>
+  <text class="warn-t" x="495" y="380">Only the flight director may uplink.</text>
+  <text class="warn-t" x="495" y="398">The consoles are denied.</text>
+
+  <!-- footer: the gateway modules this demo uses -->
+  <line class="divider" x1="304" y1="442" x2="748" y2="442"/>
+  <text class="sec" x="304" y="473">MODULES</text>
+  <rect class="pill" x="376" y="459" width="104" height="20" rx="6"/>
+  <circle class="dot" cx="387" cy="469" r="3"/>
+  <text class="pill-t" x="396" y="473">governance</text>
+  <rect class="pill" x="488" y="459" width="62" height="20" rx="6"/>
+  <circle class="dot" cx="499" cy="469" r="3"/>
+  <text class="pill-t" x="508" y="473">rbac</text>
+  <rect class="pill" x="558" y="459" width="128" height="20" rx="6"/>
+  <circle class="dot" cx="569" cy="469" r="3"/>
+  <text class="pill-t" x="578" y="473">virtual-topics</text>
+
+  <!-- writers into the gateway -->
+  <path class="flow" d="M252,232 C274,232 278,210 300,210" marker-end="url(#a)"/>
+  <path class="flow" d="M252,284 C274,284 278,298 300,298" marker-end="url(#a)"/>
+  <path class="flow" d="M252,386 H300" marker-end="url(#a)"/>
+  <!-- commands back up to the spacecraft -->
+  <path class="flow-v" d="M304,362 C284,362 278,330 256,324" marker-end="url(#av)"/>
+
+  <!-- ───── right: the consoles ───── -->
+  <rect class="card" x="808" y="172" width="200" height="76" rx="16"/>
+  <rect class="tile" x="824" y="192" width="36" height="36" rx="10"/>
+  <use href="#i-monitor" class="ico" x="832" y="200" width="20" height="20"/>
+  <text class="h" x="872" y="206">systems</text>
+  <text class="d" x="872" y="224">alerts only</text>
+
+  <rect class="card" x="808" y="260" width="200" height="76" rx="16"/>
+  <rect class="tile" x="824" y="280" width="36" height="36" rx="10"/>
+  <use href="#i-monitor" class="ico" x="832" y="288" width="20" height="20"/>
+  <text class="h" x="872" y="294">navigator</text>
+  <text class="d" x="872" y="312">Artemis only, decoded</text>
+
+  <path class="flow-v" d="M748,210 H804" marker-end="url(#av)"/>
+  <path class="flow-v" d="M748,298 H804" marker-end="url(#av)"/>
+
+  <!-- systems tries to uplink: denied -->
+  <path class="deny" d="M1008,210 H1018 Q1026,210 1026,218 V378 Q1026,386 1018,386 H752" marker-end="url(#ad)"/>
+  <text class="deny-t" x="810" y="376">✕ systems uplink: denied</text>
+
+  <!-- ───── bottom: studio and what sits behind the gateway ───── -->
+  <rect class="card" x="32" y="524" width="220" height="88" rx="16"/>
+  <rect class="tile" x="50" y="542" width="36" height="36" rx="10"/>
+  <use href="#i-dashboard" class="ico" x="58" y="550" width="20" height="20"/>
+  <text class="h" x="98" y="557">kawa studio</text>
+  <rect class="pill" x="98" y="564" width="96" height="18" rx="6"/>
+  <text class="pill-t" x="105" y="577">:5173/admin/</text>
+  <text class="d" x="50" y="600">topics · clients · RBAC · governance</text>
+  <path class="flow" d="M252,556 C280,556 292,534 304,500" marker-end="url(#a)"/>
+  <rect class="link" x="300" y="508" width="154" height="22" rx="7"/>
+  <text class="link-t" x="310" y="523">admin API :8080 · OAuth</text>
+
+  <rect class="card" x="476" y="536" width="216" height="76" rx="16"/>
+  <rect class="tile" x="492" y="556" width="36" height="36" rx="10"/>
+  <use href="#i-database" class="ico" x="500" y="564" width="20" height="20"/>
+  <text class="h" x="540" y="570">Kafka</text>
+  <text class="d" x="540" y="588">KRaft · physical topics only</text>
+  <path class="flow" d="M584,496 V532" marker-end="url(#a)"/>
+
+  <rect class="card" x="720" y="536" width="288" height="76" rx="16"/>
+  <rect class="tile" x="736" y="556" width="36" height="36" rx="10"/>
+  <use href="#i-braces" class="ico" x="744" y="564" width="20" height="20"/>
+  <text class="h" x="784" y="570">schema registry</text>
+  <text class="d" x="784" y="588">Avro schemas the gateway decodes</text>
+  <path class="dash" d="M712,496 C712,516 760,516 780,532" marker-end="url(#a)"/>
+</svg>

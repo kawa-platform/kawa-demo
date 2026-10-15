@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "StateVector",
+  "namespace": "io.jonasg.kawa.demo.mission",
+  "doc": "Where a spacecraft is and how fast it goes, as tracked by a ground station.",
+  "fields": [
+    {"name": "craft", "type": "string"},
+    {"name": "met", "type": "long", "doc": "Mission elapsed time, seconds"},
+    {"name": "altitudeKm", "type": "double"},
+    {"name": "velocityKms", "type": "double"},
+    {"name": "groundStation", "type": "string"}
+  ]
+}

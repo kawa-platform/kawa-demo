@@ -1,0 +1,159 @@
+# Mission control on Docker Compose: Kafka, a schema registry, kawa gateway and kawa studio,
+# seeded with the mission's config and a spacecraft streaming live telemetry. Run it through the Makefile (make compose-up),
+# which passes ../versions.env so every image is pinned there.
+#
+#   http://localhost:5173/admin/   kawa studio (admin@kawa / admin)
+#   localhost:9092                the gateway: connect Kafka clients here (SASL PLAIN, clients/*.properties)
+#   http://localhost:8080         the gateway admin API
+#   http://localhost:8081         the schema registry
+#   localhost:19092               the Kafka broker itself, for inspection only
+
+name: kawa-demo
+
+x-demo-tool: &demo-tool
+  # Tool containers share the gateway's network namespace, so the advertised localhost:9092
+  # reaches the gateway from inside them just as it does from the host.
+  network_mode: service:gateway
+  volumes:
+    - ..:/demo:ro
+  restart: "no"
+
+x-admin-script: &admin-script
+  image: alpine:3.22
+  entrypoint: ["/bin/sh", "-c", "apk add --no-cache -q bash curl jq openssl >/dev/null && exec bash \"$@\"", "--"]
+  environment:
+    ADMIN_URL: http://gateway:8080
+    STUDIO_URL: http://localhost:5173
+    KAWA_ADMIN_PASSWORD: ${KAWA_ADMIN_PASSWORD:-admin}
+  volumes:
+    - ..:/demo:ro
+  depends_on:
+    gateway:
+      condition: service_healthy
+  restart: "no"
+
+services:
+  kafka:
+    image: ${KAFKA_IMAGE}:${KAFKA_VERSION}
+    ports:
+      - "19092:19092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Bind to all interfaces rather than the hostname `kafka`: the broker starts before Docker's
+      # DNS is guaranteed to resolve its own service name, and binding to a name fails then.
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://localhost:9093,EXTERNAL://:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:19092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    # No healthcheck: the native image ships no CLI tools; kafka-init waits for the broker instead.
+
+  kafka-init:
+    image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
+    depends_on:
+      kafka:
+        condition: service_started
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1; do
+          echo "waiting for kafka..."; sleep 1;
+        done
+        for t in telemetry.raw navigation.raw commands.uplink; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+            --create --if-not-exists --topic "$$t" --partitions 3 --replication-factor 1
+        done
+        echo "physical topics ready"
+    restart: "no"
+
+  schema-registry:
+    image: ${SCHEMA_REGISTRY_IMAGE}:${SCHEMA_REGISTRY_VERSION}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      # The registry keeps its own _schemas topic on the broker directly, not through the gateway.
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/subjects >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  gateway:
+    image: ${GATEWAY_IMAGE}:${GATEWAY_VERSION}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "8080:8080"
+    environment:
+      KAWA_LOG_LEVEL: ${KAWA_LOG_LEVEL:-INFO}
+      KAWA_ADMIN_PASSWORD: ${KAWA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ../config/gateway.yaml:/etc/kawa/config.yaml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/docs || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  studio:
+    image: ${STUDIO_IMAGE}:${STUDIO_VERSION}
+    depends_on:
+      - gateway
+    ports:
+      - "5173:80"
+    environment:
+      # Where studio's nginx proxies /api/ to (used by studio builds with the same-origin /api base).
+      KAWA_API_UPSTREAM: http://gateway:8080
+
+  # Sets up mission control: virtual topics, SASL clients and RBAC (scripts/seed.sh), then the
+  # governance rules (scripts/governance.sh), then exits.
+  seed:
+    <<: *admin-script
+    command: ["-c", "/demo/scripts/seed.sh && /demo/scripts/governance.sh"]
+
+  # The spacecraft (client spacecraft): streams JSON telemetry to telemetry.raw and receives the
+  # commands uplinked to commands.uplink (make commands follows it).
+  spacecraft:
+    <<: *demo-tool
+    image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    command: ["/bin/sh", "/demo/scripts/spacecraft.sh"]
+    restart: unless-stopped
+
+  # On-demand tools (make consume / send / topic / avro / governance / token).
+  tools:
+    <<: *demo-tool
+    image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
+    profiles: [tools]
+    depends_on:
+      - gateway
+
+  avro:
+    <<: *demo-tool
+    image: ${SCHEMA_REGISTRY_IMAGE}:${SCHEMA_REGISTRY_VERSION}
+    profiles: [tools]
+    depends_on:
+      - gateway
+    entrypoint: ["/bin/sh"]
+
+  admin:
+    <<: *admin-script
+    profiles: [tools]
