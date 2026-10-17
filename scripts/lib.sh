@@ -12,7 +12,7 @@ wait_for_admin() {
     until curl -fsS -o /dev/null "$ADMIN_URL/docs" 2>/dev/null; do
         tries=$((tries + 1))
         [ "$tries" -lt 90 ] || { echo "admin API at $ADMIN_URL did not come up" >&2; return 1; }
-        [ "$tries" -eq 1 ] && echo "waiting for the admin API at $ADMIN_URL ..."
+        [ "$tries" -eq 1 ] && echo "⏳ waiting for the admin API at $ADMIN_URL ..."
         sleep 2
     done
 }

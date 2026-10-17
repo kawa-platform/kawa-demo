@@ -1,5 +1,5 @@
 # The demo workloads around the kawa chart: the spacecraft and two tool pods
-# to exec demo commands in. Applied after the seed Job (k8s/seed.yaml) has completed, so the
+# to exec demo commands in. Applied after the gateway-init Job (k8s/gateway-init.yaml) has completed, so the
 # spacecraft's SASL client and grants exist when it connects. Scripts, client configs and the schema
 # come from ConfigMaps that k8s/up.sh builds from ../scripts, ../clients and ../schemas.
 # ${...} placeholders are filled from versions.env by k8s/up.sh (envsubst).

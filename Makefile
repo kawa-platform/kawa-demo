@@ -68,18 +68,18 @@ build-local: build-gateway build-studio ## Build both; versions set to `local` a
 
 ## Docker Compose
 .PHONY: compose-up
-compose-up: $(LOCAL_BUILDS) ## Start mission control on compose (Kafka, schema registry, gateway, studio, seed, spacecraft)
+compose-up: $(LOCAL_BUILDS) ## Start mission control on compose (Kafka, schema registry, gateway, studio, gateway-init, spacecraft)
 	$(COMPOSE) up -d --remove-orphans
-	@[ "$$($(COMPOSE) ps -a seed --format '{{.ExitCode}}')" = 0 ] || { $(COMPOSE) logs seed; echo "seed failed"; exit 1; }
+	@[ "$$($(COMPOSE) ps -a gateway-init --format '{{.ExitCode}}')" = 0 ] || { $(COMPOSE) logs gateway-init; echo "💥 gateway-init failed"; exit 1; }
 	@echo
 	@$(COMPOSE) ps --format '{{.Service}} {{.Image}}' gateway studio | \
 		awk '{ split($$2, ref, ":"); printf "  %-13s %s   (%s)\n", "kawa " $$1, ref[length(ref)], $$2 }'
 	@echo
-	@echo "  kawa studio   http://localhost:5173/admin/   (admin@kawa / $${KAWA_ADMIN_PASSWORD:-admin})"
-	@echo "  gateway       localhost:9092 (SASL PLAIN: spacecraft, director, systems, navigator / <name>-secret)"
-	@echo "  admin API     http://localhost:8080          (token: make token)"
+	@echo "  🖥️  kawa studio   http://localhost:5173/admin/   (admin@kawa / $${KAWA_ADMIN_PASSWORD:-admin})"
+	@echo "  📡 gateway      localhost:9092 (SASL PLAIN: spacecraft, director, systems, navigator / <name>-secret)"
+	@echo "  🔧 admin API     http://localhost:8080          (token: make token)"
 	@echo
-	@echo "  next: make consume   (systems watches telemetry alerts)   |   make help"
+	@echo "  👉 next: make consume   (systems watches telemetry alerts)   |   make help"
 
 .PHONY: compose-down
 compose-down: ## Stop the compose demo and delete its data
@@ -97,9 +97,9 @@ compose-logs: ## Follow the gateway's logs
 token: ## Print an admin API access token (export KAWA_TOKEN=$(make -s token))
 	@ADMIN_URL=$${ADMIN_URL:-http://localhost:8080} scripts/token.sh
 
-.PHONY: seed
-seed: ## Re-run the mission control seed (virtual topics, clients, RBAC)
-	$(COMPOSE) run --rm admin /demo/scripts/seed.sh
+.PHONY: gateway-init
+gateway-init: ## Re-run the mission control gateway setup (virtual topics, clients, RBAC)
+	$(COMPOSE) run --rm admin /demo/scripts/gateway-init.sh
 
 .PHONY: governance
 governance: ## Reload the governance rules (compose-up loads them already), e.g. after editing governance.sh
@@ -137,7 +137,7 @@ avro: ## Produce Avro state vectors to navigation.raw, then read navigation.arte
 
 ## Minikube
 .PHONY: k8s-up
-k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa chart, seed, telemetry)
+k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa chart, gateway-init, telemetry)
 	k8s/up.sh
 
 .PHONY: k8s-forward
@@ -155,9 +155,9 @@ k8s-ps: ## Show the minikube demo's pods and their images
 k8s-token: ## Print an admin API access token for the minikube gateway
 	@k8s/admin.sh token.sh
 
-.PHONY: k8s-seed
-k8s-seed: ## Re-run the mission control seed on minikube
-	k8s/admin.sh seed.sh
+.PHONY: k8s-gateway-init
+k8s-gateway-init: ## Re-run the mission control gateway setup on minikube
+	k8s/admin.sh gateway-init.sh
 
 .PHONY: k8s-governance
 k8s-governance: ## Reload the governance rules on minikube

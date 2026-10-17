@@ -10,7 +10,7 @@ gateway:
   image:
     pullPolicy: IfNotPresent
 
-  # Demo only: the bootstrap admin is admin@kawa / admin. The secret is what the seed job reads.
+  # Demo only: the bootstrap admin is admin@kawa / admin. The secret is what the gateway-init job reads.
   secrets:
     adminPassword: admin
 

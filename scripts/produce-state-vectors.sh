@@ -29,4 +29,4 @@ done | kafka-avro-console-producer --bootstrap-server "$BOOTSTRAP" --topic "$TOP
     --producer.config "$DEMO_DIR/clients/$CLIENT.properties" \
     --property schema.registry.url="$SCHEMA_REGISTRY_URL" \
     --property value.schema.file="$DEMO_DIR/schemas/state-vector.avsc"
-echo "produced $COUNT state vectors to $TOPIC (half of them artemis-3)"
+echo "🧭 produced $COUNT state vectors to $TOPIC (half of them artemis-3)"

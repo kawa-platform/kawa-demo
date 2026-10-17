@@ -54,8 +54,8 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kafka-init
-  labels: {app.kubernetes.io/name: kafka-init, app.kubernetes.io/part-of: kawa-demo}
+  name: kafka-topics-init
+  labels: {app.kubernetes.io/name: kafka-topics-init, app.kubernetes.io/part-of: kawa-demo}
 spec:
   backoffLimit: 10
   template:
@@ -63,7 +63,7 @@ spec:
       restartPolicy: OnFailure
       enableServiceLinks: false
       containers:
-        - name: kafka-init
+        - name: kafka-topics-init
           image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-c"]

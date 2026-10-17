@@ -55,7 +55,7 @@ first start only, so on an existing stack run `make compose-down` first.
 | `systems`    | the systems engineer    | read `telemetry.alerts` only                                     |
 | `navigator`  | the navigation officer  | read `navigation.artemis` only                                   |
 
-**Seeding.** [`scripts/seed.sh`](scripts/seed.sh) loads all of this through the admin API. It logs
+**Gateway init.** [`scripts/gateway-init.sh`](scripts/gateway-init.sh) loads all of this through the admin API. It logs
 in headlessly with [`scripts/token.sh`](scripts/token.sh), which performs the OAuth
 authorization-code + PKCE flow without a browser.
 
@@ -90,7 +90,7 @@ make compose-up
 ```
 
 1. **Studio.** Open http://localhost:5173/admin/ and sign in. Under topics, RBAC and clients you'll
-   find what the seed created.
+   find what gateway-init created.
 2. **The alerts console.** The systems engineer consumes `telemetry.alerts` and sees only the
    warnings and criticals, not the nominal readings:
    ```bash
@@ -125,7 +125,7 @@ make compose-up
    ```bash
    make avro
    ```
-5. **Governance.** `make compose-up` loads these rules right after the seed:
+5. **Governance.** `make compose-up` loads these rules right after gateway-init:
     - topic names are `<domain>.<name>`, with domain one of telemetry, navigation, commands, comms
       or payload;
     - partition counts must be 1, 3, 6 or 12;
@@ -181,7 +181,7 @@ make k8s-up
 2. Installs Kafka and the schema registry ([`k8s/`](k8s)) in the namespace `kawa-demo`.
 3. Installs the kawa chart with [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the
    versions from `versions.env`.
-4. Runs the seed job, then starts the spacecraft and the tool pods.
+4. Runs the gateway-init job, then starts the spacecraft and the tool pods.
 
 Re-run it to roll out new versions.
 
@@ -249,7 +249,7 @@ minikube delete -p kawa-demo
 | `config/gateway.yaml`       | Startup config of the Compose gateway (minikube: the chart renders it)                                                                |
 | `compose/`                  | `docker-compose.yml`                                                                                                                  |
 | `k8s/`                      | Kafka, schema registry and demo workloads; chart values; up/down/forward scripts                                                      |
-| `scripts/`                  | `token.sh` (headless admin login), `seed.sh`, `governance.sh`, the telemetry and state vector producers, and the Kafka client scripts |
+| `scripts/`                  | `token.sh` (headless admin login), `gateway-init.sh`, `governance.sh`, the telemetry and state vector producers, and the Kafka client scripts |
 | `clients/`                  | SASL client configs for spacecraft, director, systems and navigator                                                                            |
 | `schemas/state-vector.avsc` | Avro schema of the state vectors                                                                                                      |
 

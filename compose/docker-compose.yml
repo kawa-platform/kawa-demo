@@ -1,5 +1,5 @@
 # Mission control on Docker Compose: Kafka, a schema registry, kawa gateway and kawa studio,
-# seeded with the mission's config and a spacecraft streaming live telemetry. Run it through the Makefile (make compose-up),
+# set up with the mission's config (gateway-init) and a spacecraft streaming live telemetry. Run it through the Makefile (make compose-up),
 # which passes ../versions.env so every image is pinned there.
 #
 #   http://localhost:5173/admin/   kawa studio (admin@kawa / admin)
@@ -52,9 +52,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    # No healthcheck: the native image ships no CLI tools; kafka-init waits for the broker instead.
+    # No healthcheck: the native image ships no CLI tools; kafka-topics-init waits for the broker instead.
 
-  kafka-init:
+  kafka-topics-init:
     image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
     depends_on:
       kafka:
@@ -75,7 +75,7 @@ services:
   schema-registry:
     image: ${SCHEMA_REGISTRY_IMAGE}:${SCHEMA_REGISTRY_VERSION}
     depends_on:
-      kafka-init:
+      kafka-topics-init:
         condition: service_completed_successfully
     ports:
       - "8081:8081"
@@ -93,7 +93,7 @@ services:
   gateway:
     image: ${GATEWAY_IMAGE}:${GATEWAY_VERSION}
     depends_on:
-      kafka-init:
+      kafka-topics-init:
         condition: service_completed_successfully
       schema-registry:
         condition: service_healthy
@@ -121,11 +121,11 @@ services:
       # Where studio's nginx proxies /api/ to (used by studio builds with the same-origin /api base).
       KAWA_API_UPSTREAM: http://gateway:8080
 
-  # Sets up mission control: virtual topics, SASL clients and RBAC (scripts/seed.sh), then the
+  # Sets up mission control: virtual topics, SASL clients and RBAC (scripts/gateway-init.sh), then the
   # governance rules (scripts/governance.sh), then exits.
-  seed:
+  gateway-init:
     <<: *admin-script
-    command: ["-c", "/demo/scripts/seed.sh && /demo/scripts/governance.sh"]
+    command: ["-c", "/demo/scripts/gateway-init.sh && /demo/scripts/governance.sh"]
 
   # The spacecraft (client spacecraft): streams JSON telemetry to telemetry.raw and receives the
   # commands uplinked to commands.uplink (make commands follows it).
@@ -133,7 +133,7 @@ services:
     <<: *demo-tool
     image: ${KAFKA_TOOLS_IMAGE}:${KAFKA_VERSION}
     depends_on:
-      seed:
+      gateway-init:
         condition: service_completed_successfully
     command: ["/bin/sh", "/demo/scripts/spacecraft.sh"]
     restart: unless-stopped

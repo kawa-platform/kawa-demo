@@ -38,6 +38,6 @@ readings() {
     done
 }
 
-echo "streaming telemetry to $TOPIC via $BOOTSTRAP every ${INTERVAL}s"
+echo "📡 streaming telemetry to $TOPIC via $BOOTSTRAP every ${INTERVAL}s"
 readings | "$KAFKA_BIN/kafka-console-producer.sh" --bootstrap-server "$BOOTSTRAP" \
     --command-config "$CLIENT_CONFIG" --topic "$TOPIC"

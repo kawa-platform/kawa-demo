@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Runs one of the admin API scripts (token.sh, seed.sh, governance.sh) on this machine against
+# Runs one of the admin API scripts (token.sh, gateway-init.sh, governance.sh) on this machine against
 # the minikube gateway, through a temporary port-forward.
 #
 #   k8s/admin.sh governance.sh
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
-script="${1:?usage: k8s/admin.sh <token.sh|seed.sh|governance.sh>}"
+script="${1:?usage: k8s/admin.sh <token.sh|gateway-init.sh|governance.sh>}"
 port="${ADMIN_FORWARD_PORT:-18080}"
 
 kubectl --context "$MINIKUBE_PROFILE" -n "$NAMESPACE" port-forward "svc/$RELEASE-gateway" "$port:8080" >/dev/null &

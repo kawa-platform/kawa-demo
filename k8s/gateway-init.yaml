@@ -1,11 +1,11 @@
-# Sets up mission control (virtual topics, SASL clients, RBAC; scripts/seed.sh) and the governance
+# Sets up mission control (virtual topics, SASL clients, RBAC; scripts/gateway-init.sh) and the governance
 # rules (scripts/governance.sh) in the gateway, with a headless admin login. k8s/up.sh applies it,
 # waits for it to complete, then starts k8s/demo.yaml.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kawa-seed
-  labels: {app.kubernetes.io/name: kawa-seed, app.kubernetes.io/part-of: kawa-demo}
+  name: kawa-gateway-init
+  labels: {app.kubernetes.io/name: kawa-gateway-init, app.kubernetes.io/part-of: kawa-demo}
 spec:
   backoffLimit: 6
   template:
@@ -13,10 +13,10 @@ spec:
       restartPolicy: OnFailure
       enableServiceLinks: false
       containers:
-        - name: seed
+        - name: gateway-init
           image: alpine:3.22
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c", "apk add --no-cache -q bash curl jq openssl >/dev/null && bash /demo/scripts/seed.sh && exec bash /demo/scripts/governance.sh"]
+          command: ["/bin/sh", "-c", "apk add --no-cache -q bash curl jq openssl >/dev/null && bash /demo/scripts/gateway-init.sh && exec bash /demo/scripts/governance.sh"]
           env:
             - {name: ADMIN_URL, value: "http://kawa-gateway:8080"}
             - {name: STUDIO_URL, value: "http://localhost:5173"}

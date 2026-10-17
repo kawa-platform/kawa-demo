@@ -16,7 +16,7 @@ KAFKA_BIN="${KAFKA_BIN:-/opt/kafka/bin}"
 
 set -- --bootstrap-server "$BOOTSTRAP" --command-config "$DEMO_DIR/clients/$CLIENT.properties" \
     --topic "$TOPIC" --group "$GROUP" --from-beginning --property print.timestamp=true
-echo "consuming $TOPIC as $CLIENT (group $GROUP)" >&2
+echo "👂 consuming $TOPIC as $CLIENT (group $GROUP)" >&2
 if [ -z "$MAX" ]; then
     exec "$KAFKA_BIN/kafka-console-consumer.sh" "$@"
 fi

@@ -8,5 +8,5 @@ source "$(dirname "$0")/env.sh"
 kubectl --context "$MINIKUBE_PROFILE" -n "$NAMESPACE" port-forward "svc/$RELEASE-studio" "${STUDIO_PORT:-5173}:80" &
 kubectl --context "$MINIKUBE_PROFILE" -n "$NAMESPACE" port-forward "svc/$RELEASE-gateway" "${ADMIN_PORT:-8080}:8080" &
 trap 'kill $(jobs -p) 2>/dev/null' EXIT INT TERM
-echo "kawa studio: http://localhost:${STUDIO_PORT:-5173}/admin/   (Ctrl-C to stop)"
+echo "🖥️  kawa studio: http://localhost:${STUDIO_PORT:-5173}/admin/   (Ctrl-C to stop)"
 wait

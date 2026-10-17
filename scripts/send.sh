@@ -13,7 +13,7 @@ KAFKA_BIN="${KAFKA_BIN:-/opt/kafka/bin}"
 MESSAGE='{"cmd":"OMS-BURN","craft":"artemis-3","durationS":42,"issuedBy":"director"}'
 [ $# -gt 0 ] && MESSAGE="$1"
 
-echo "sending to $TOPIC as $CLIENT: $MESSAGE" >&2
+echo "✉️  sending to $TOPIC as $CLIENT: $MESSAGE" >&2
 printf '%s\n' "$MESSAGE" | "$KAFKA_BIN/kafka-console-producer.sh" --bootstrap-server "$BOOTSTRAP" \
     --command-config "$DEMO_DIR/clients/$CLIENT.properties" --topic "$TOPIC" \
     --command-property max.block.ms=10000 --command-property delivery.timeout.ms=15000 \

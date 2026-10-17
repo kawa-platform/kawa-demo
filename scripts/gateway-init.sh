@@ -18,7 +18,7 @@
 # back to a single virtual name, so several filtered views over one physical topic don't work yet.
 # The physical topics stay visible (exposePhysicalTopic) so the spacecraft can produce to them.
 #
-#   ADMIN_URL=http://localhost:8080 scripts/seed.sh
+#   ADMIN_URL=http://localhost:8080 scripts/gateway-init.sh
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
@@ -26,7 +26,7 @@ wait_for_admin
 ensure_token
 q='?consistency=applied'
 
-echo "── virtual topics"
+echo "🛰️  virtual topics"
 api PUT "/topics/telemetry.alerts$q" <<'JSON'
 {"type": "virtual", "topic": "telemetry.raw", "exposePhysicalTopic": true,
  "valueFormat": {"type": "json"},
@@ -38,7 +38,7 @@ api PUT "/topics/navigation.artemis$q" <<'JSON'
  "filter": {"type": "cel", "expression": "value.craft == \"artemis-3\""}}
 JSON
 
-echo "── SASL clients"
+echo "🔑 SASL clients"
 for client in spacecraft director systems navigator; do
     api PUT "/auth/clients/$client$q" <<JSON
 {"mechanism": "PLAIN", "password": "$client-secret"}
@@ -53,7 +53,7 @@ role() {
     api PUT "/rbac/roles/$name$q" <<< "{\"acls\": [$acls]}"
 }
 
-echo "── RBAC roles"
+echo "🛡️  RBAC roles"
 # DESCRIBE on the virtual names too: rc.2 authorizes Metadata for an exposed physical topic under
 # its virtual name, so without it telemetry.raw never shows up for the spacecraft.
 role flight-computer \
@@ -79,7 +79,7 @@ role navigation-console \
     "$(acl TOPIC navigation.artemis LITERAL READ)" "$(acl TOPIC navigation.artemis LITERAL DESCRIBE)" \
     "$(acl GROUP navigator. PREFIXED READ)" "$(acl GROUP navigator. PREFIXED DESCRIBE)"
 
-echo "── RBAC groups"
+echo "👩‍🚀 RBAC groups"
 api PUT "/rbac/groups/spacecraft$q" <<'JSON'
 {"clients": ["spacecraft"], "roles": ["flight-computer"]}
 JSON
@@ -93,4 +93,4 @@ api PUT "/rbac/groups/navigation-officers$q" <<'JSON'
 {"clients": ["navigator"], "roles": ["navigation-console"]}
 JSON
 
-echo "mission control is go."
+echo "🚀 mission control is go."

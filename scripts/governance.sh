@@ -17,7 +17,7 @@ wait_for_admin
 ensure_token
 q='?consistency=applied'
 
-echo "── variables"
+echo "📐 variables"
 api PUT "/governance/variables/missionDomains$q" <<'JSON'
 {"type": "list<string>", "value": "[\"telemetry\", \"navigation\", \"commands\", \"comms\", \"payload\"]", "note": "Mission domains a topic name starts with."}
 JSON
@@ -28,7 +28,7 @@ api PUT "/governance/variables/minCommandRetentionMs$q" <<'JSON'
 {"type": "int", "value": "604800000", "note": "7 days: the post-flight review replays every command."}
 JSON
 
-echo "── rules"
+echo "📜 rules"
 api PUT "/governance/rules/topic-naming$q" <<'JSON'
 {
   "description": "Topics are <domain>.<name>[.<name>...] in lower case, with a mission domain.",
@@ -80,7 +80,7 @@ api PUT "/governance/rules/console-groups$q" <<'JSON'
 }
 JSON
 
-echo "governance loaded. Dry run of a topic called Houston:"
+echo "✅ governance loaded. Dry run of a topic called Houston:"
 curl -sS -X POST "$ADMIN_URL/governance/dry-run" -H "Authorization: Bearer $KAWA_TOKEN" \
     -H 'Content-Type: application/json' \
     -d '{"resourceType":"TOPIC","resource":{"name":"Houston","partitions":3,"replicationFactor":1}}' \
