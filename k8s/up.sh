@@ -19,18 +19,13 @@ elif [ "$(mk status --format '{{.APIServer}}' 2>/dev/null || true)" != Running ]
     mk start || { echo "minikube profile $MINIKUBE_PROFILE does not start; recreate it with: minikube delete -p $MINIKUBE_PROFILE" >&2; exit 1; }
 fi
 
-# The kawa images on ghcr are private, so minikube cannot pull them itself: every image is pulled
-# with your docker login (or taken from make build-local for :local) and loaded into minikube. This
-# also spares minikube from downloading the large Kafka and schema registry images again.
 step "images"
-for img in "$GATEWAY_IMAGE:$GATEWAY_VERSION" "$STUDIO_IMAGE:$STUDIO_VERSION" \
-        "$KAFKA_IMAGE:$KAFKA_VERSION" "$KAFKA_TOOLS_IMAGE:$KAFKA_VERSION" \
-        "$SCHEMA_REGISTRY_IMAGE:$SCHEMA_REGISTRY_VERSION" alpine:3.22; do
-    if [[ "$img" != *:local ]] && ! docker image inspect "$img" >/dev/null 2>&1; then
-        docker pull -q "$img" >/dev/null || { echo "cannot pull $img (docker login ghcr.io?)" >&2; exit 1; }
+for img in "$GATEWAY_IMAGE:$GATEWAY_VERSION" "$STUDIO_IMAGE:$STUDIO_VERSION"; do
+    # If the image name ends with :local, load it into minikube. Otherwise, minikube will pull it from the registry.
+    if [[ "$img" == *:local ]]; then
+        echo "loading $img"
+        mk image load "$img"
     fi
-    echo "loading $img"
-    mk image load "$img"
 done
 
 step "namespace $NAMESPACE, Kafka, schema registry"

@@ -178,11 +178,10 @@ make k8s-up
 1. Starts minikube if needed, in a profile of its own (`kawa-demo`; set `MINIKUBE_PROFILE` to
    change it). It uses the kubectl context of the same name, so your other clusters stay untouched.
    Resources: `MINIKUBE_CPUS` (default 4) and `MINIKUBE_MEMORY` (default 4g).
-2. Loads the kawa images into minikube.
-3. Applies Kafka and the schema registry ([`k8s/`](k8s)) in the namespace `kawa-demo`.
-4. Installs the kawa chart with [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the
+2. Installs Kafka and the schema registry ([`k8s/`](k8s)) in the namespace `kawa-demo`.
+3. Installs the kawa chart with [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the
    versions from `versions.env`.
-5. Runs the seed job, then starts the spacecraft and the tool pods.
+4. Runs the seed job, then starts the spacecraft and the tool pods.
 
 Re-run it to roll out new versions.
 
