@@ -24,8 +24,7 @@ first start only, so on an existing stack run `make compose-down` first.
 ## Prerequisites
 
 - Docker with Compose v2, plus `make`, `curl` and `jq`.
-- For minikube: `minikube`, `kubectl`, `helm` and `envsubst` (`brew install gettext`). The chart is
-  installed from a `../kawa-charts` checkout next to this repo.
+- For minikube: `minikube`, `kubectl`, `helm` and `envsubst` (`brew install gettext`). 
 
 ## Resources
 ### Topics

@@ -1,23 +1,51 @@
 # kawa chart overrides for the minikube demo. Image repositories and tags are not set here:
 # k8s/up.sh passes them from versions.env.
 
-# The studio 0.1.0-rc.1 image calls the admin API at http://localhost:8080 from the browser, so the
-# demo is reached through port-forwards (k8s/forward.sh): studio on 5173, the admin API on 8080.
-publicUrl: http://localhost:5173
-
+# The gateway config is config/gateway.yaml (the compose demo's), written out here because a Helm
+# values file cannot include another file. Two things differ on minikube: `advertised` is left to the
+# chart (the Service's DNS name, which the tool pods use as their bootstrap address), and the browser
+# reaches Studio and the admin API through the port-forwards (k8s/forward.sh), so the login URL and
+# CORS origin point at localhost:5173.
 gateway:
   image:
-    pullPolicy: IfNotPresent   # the private ghcr images are loaded into minikube by up.sh
-  kafka:
-    bootstrapServers: [kafka:9092]
-  admin:
-    auth:
-      password: admin          # demo only: the bootstrap admin is admin@kawa / admin
+    pullPolicy: IfNotPresent
+
+  # Demo only: the bootstrap admin is admin@kawa / admin. The secret is what the seed job reads.
+  secrets:
+    adminPassword: admin
+
   config:
+    listeners:
+      - host: 0.0.0.0
+        port: 9092
+
     clusters:
       default:
+        bootstrapServers:
+          - kafka:9092
+        # Used by virtual topics with valueFormat avro (navigation.artemis).
         schemaRegistry:
           url: http://schema-registry:8081
+
+    admin:
+      enabled: true
+      host: 0.0.0.0
+      port: 8080
+      # Login: admin@kawa / admin through kawa studio. Tokens are signed with the chart's generated
+      # signing key, which stays across upgrades.
+      auth:
+        type: oauth
+        bootstrapUser:
+          username: admin@kawa
+          password: ${KAWA_ADMIN_PASSWORD}
+        settings:
+          loginUrl: http://localhost:5173/admin/login
+          redirectUris:
+            - http://localhost:5173/admin/auth/callback
+          signingKey: ${KAWA_SIGNING_KEY}
+      cors:
+        allowedOrigins:
+          - http://localhost:5173
 
 studio:
   image:

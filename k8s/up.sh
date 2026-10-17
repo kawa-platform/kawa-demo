@@ -41,11 +41,12 @@ kc rollout status statefulset/kafka --timeout=600s
 kc wait --for=condition=complete job/kafka-init --timeout=600s
 kc rollout status deployment/schema-registry --timeout=600s
 
-step "kawa chart ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION"
-chart_args=()
-[ -n "${KAWA_CHART_VERSION:-}" ] && chart_args+=(--version "$KAWA_CHART_VERSION")
+step "kawa chart $KAWA_CHART${KAWA_CHART_VERSION:+ $KAWA_CHART_VERSION} ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION"
 chart="$KAWA_CHART"
 [[ "$chart" == ../* || "$chart" == ./* ]] && chart="$DEMO_DIR/$chart"
+chart_args=()
+# if $chart is not a directory AND KAWA_CHART_VERSION is not empty, append --version and its value to chart_args.
+[ ! -d "$chart" ] && [ -n "${KAWA_CHART_VERSION:-}" ] && chart_args+=(--version "$KAWA_CHART_VERSION")
 helm upgrade --install "$RELEASE" "$chart" ${chart_args[@]+"${chart_args[@]}"} \
     --kube-context "$MINIKUBE_PROFILE" -n "$NAMESPACE" \
     -f "$DEMO_DIR/k8s/values-minikube.yaml" \
