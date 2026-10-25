@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Starts mission control on minikube: Kafka, a schema registry, the kawa chart (gateway + studio),
-# the gateway setup, the spacecraft and tool pods. Idempotent: re-run it to apply new versions.
+# Starts mission control on minikube: Kafka, a schema registry, the kawa chart (gateway, studio and the
+# operator), mission control as operator resources, the governance rules, the spacecraft and tool pods.
+# Idempotent: re-run it to apply new versions.
 #
 #   k8s/up.sh
 #   GATEWAY_VERSION=0.1.0-rc.3 k8s/up.sh       # versions come from versions.env otherwise
@@ -36,27 +37,44 @@ kc rollout status statefulset/kafka --timeout=600s
 kc wait --for=condition=complete job/kafka-topics-init --timeout=600s
 kc rollout status deployment/schema-registry --timeout=600s
 
-step "⎈  kawa chart $KAWA_CHART${KAWA_CHART_VERSION:+ $KAWA_CHART_VERSION} ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION"
+step "⎈  kawa chart $KAWA_CHART${KAWA_CHART_VERSION:+ $KAWA_CHART_VERSION} ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION, operator $OPERATOR_VERSION"
+# The gateway and the operator share the operator client's secret. Demo only: a fixed value.
+kc create secret generic kawa-operator-client --from-literal=client-secret=kawa-operator-secret \
+    --dry-run=client -o yaml | kc apply -f - >/dev/null
 chart="$KAWA_CHART"
 [[ "$chart" == ../* || "$chart" == ./* ]] && chart="$DEMO_DIR/$chart"
 chart_args=()
-# if $chart is not a directory AND KAWA_CHART_VERSION is not empty, append --version and its value to chart_args.
-[ ! -d "$chart" ] && [ -n "${KAWA_CHART_VERSION:-}" ] && chart_args+=(--version "$KAWA_CHART_VERSION")
+if [ -d "$chart" ]; then
+    # A local chart: fetch its subcharts (the gateway and operator charts).
+    helm dependency update "$chart" >/dev/null
+elif [ -n "${KAWA_CHART_VERSION:-}" ]; then
+    chart_args+=(--version "$KAWA_CHART_VERSION")
+fi
 helm upgrade --install "$RELEASE" "$chart" ${chart_args[@]+"${chart_args[@]}"} \
     --kube-context "$MINIKUBE_PROFILE" -n "$NAMESPACE" \
     -f "$DEMO_DIR/k8s/values-minikube.yaml" \
-    --set gateway.image.repository="$GATEWAY_IMAGE",gateway.image.tag="$GATEWAY_VERSION" \
-    --set studio.image.repository="$STUDIO_IMAGE",studio.image.tag="$STUDIO_VERSION" \
+    --set kawa-gateway.gateway.image.repository="$GATEWAY_IMAGE",kawa-gateway.gateway.image.tag="$GATEWAY_VERSION" \
+    --set kawa-gateway.studio.image.repository="$STUDIO_IMAGE",kawa-gateway.studio.image.tag="$STUDIO_VERSION" \
+    --set kawa-operator.image.repository="$OPERATOR_IMAGE",kawa-operator.image.tag="$OPERATOR_VERSION" \
     --wait --timeout 5m
+
+step "🛰️  mission control (operator resources)"
+kc apply -f "$DEMO_DIR/k8s/mission-control.yaml"
+if ! kc wait --for=condition=Ready $KAWA_KINDS --all --timeout=120s >/dev/null; then
+    kc get $KAWA_KINDS -o wide
+    echo "💥 mission control is not Ready; see REASON above and: kubectl logs deploy/$RELEASE-kawa-operator" >&2
+    exit 1
+fi
+kc get $KAWA_KINDS
 
 step "🧑‍🚀 demo workloads"
 for part in scripts clients schemas; do
     kc create configmap "kawa-demo-$part" --from-file="$DEMO_DIR/$part" --dry-run=client -o yaml | kc apply -f - >/dev/null
 done
-kc delete job kawa-gateway-init --ignore-not-found >/dev/null
-kc apply -f "$DEMO_DIR/k8s/gateway-init.yaml"
-kc wait --for=condition=complete job/kawa-gateway-init --timeout=300s || { kc logs job/kawa-gateway-init; exit 1; }
-kc logs job/kawa-gateway-init | tail -n 1
+kc delete job kawa-gateway-init kawa-governance --ignore-not-found >/dev/null
+kc apply -f "$DEMO_DIR/k8s/governance.yaml"
+kc wait --for=condition=complete job/kawa-governance --timeout=300s || { kc logs job/kawa-governance; exit 1; }
+kc logs job/kawa-governance | tail -n 1
 envsubst "$SUBST_VARS" < "$DEMO_DIR/k8s/demo.yaml" | kc apply -f -
 kc rollout status deployment/kawa-spacecraft --timeout=600s
 kc rollout status deployment/kawa-tools --timeout=600s

@@ -34,7 +34,7 @@ KAWA_IMAGES = $(GATEWAY_IMAGE):$(GATEWAY_VERSION) $(STUDIO_IMAGE):$(STUDIO_VERSI
 # Components whose version is `local`: built from *_SRC before compose-up / k8s-up.
 LOCAL_BUILDS = $(if $(filter local,$(GATEWAY_VERSION)),build-gateway) $(if $(filter local,$(STUDIO_VERSION)),build-studio)
 
-ALL_IMAGES = $(KAWA_IMAGES) $(KAFKA_IMAGE):$(KAFKA_VERSION) $(KAFKA_TOOLS_IMAGE):$(KAFKA_VERSION) \
+ALL_IMAGES = $(KAWA_IMAGES) $(OPERATOR_IMAGE):$(OPERATOR_VERSION) $(KAFKA_IMAGE):$(KAFKA_VERSION) $(KAFKA_TOOLS_IMAGE):$(KAFKA_VERSION) \
 	$(SCHEMA_REGISTRY_IMAGE):$(SCHEMA_REGISTRY_VERSION)
 
 .PHONY: help
@@ -137,7 +137,7 @@ avro: ## Produce Avro state vectors to navigation.raw, then read navigation.arte
 
 ## Minikube
 .PHONY: k8s-up
-k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa chart, gateway-init, telemetry)
+k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa chart with the operator, telemetry)
 	k8s/up.sh
 
 .PHONY: k8s-forward
@@ -155,9 +155,9 @@ k8s-ps: ## Show the minikube demo's pods and their images
 k8s-token: ## Print an admin API access token for the minikube gateway
 	@k8s/admin.sh token.sh
 
-.PHONY: k8s-gateway-init
-k8s-gateway-init: ## Re-run the mission control gateway setup on minikube
-	k8s/admin.sh gateway-init.sh
+.PHONY: k8s-resources
+k8s-resources: ## Show mission control's operator resources (virtual topics, clients, roles, groups) and their status
+	@$(KC) get $$(source k8s/env.sh && echo $$KAWA_KINDS) -o wide
 
 .PHONY: k8s-governance
 k8s-governance: ## Reload the governance rules on minikube

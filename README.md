@@ -55,9 +55,10 @@ first start only, so on an existing stack run `make compose-down` first.
 | `systems`    | the systems engineer    | read `telemetry.alerts` only                                     |
 | `navigator`  | the navigation officer  | read `navigation.artemis` only                                   |
 
-**Gateway init.** [`scripts/gateway-init.sh`](scripts/gateway-init.sh) loads all of this through the admin API. It logs
-in headlessly with [`scripts/token.sh`](scripts/token.sh), which performs the OAuth
-authorization-code + PKCE flow without a browser.
+**Gateway init.** On Compose, [`scripts/gateway-init.sh`](scripts/gateway-init.sh) loads all of this through the
+admin API. It logs in headlessly with [`scripts/token.sh`](scripts/token.sh), which performs the OAuth
+authorization-code + PKCE flow without a browser. On minikube, the **kawa operator** does it instead, from the
+custom resources in [`k8s/mission-control.yaml`](k8s/mission-control.yaml).
 
 ## The client commands
 
@@ -179,9 +180,13 @@ make k8s-up
    change it). It uses the kubectl context of the same name, so your other clusters stay untouched.
    Resources: `MINIKUBE_CPUS` (default 4) and `MINIKUBE_MEMORY` (default 4g).
 2. Installs Kafka and the schema registry ([`k8s/`](k8s)) in the namespace `kawa-demo`.
-3. Installs the kawa chart with [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the
-   versions from `versions.env`.
-4. Runs the gateway-init job, then starts the spacecraft and the tool pods.
+3. Installs the kawa chart (gateway, studio and the kawa operator) with
+   [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the versions from `versions.env`.
+4. Applies mission control as operator resources ([`k8s/mission-control.yaml`](k8s/mission-control.yaml)):
+   the virtual topics, SASL clients, RBAC roles and groups. The operator writes them to the gateway, and
+   `make k8s-up` waits until each one is Ready.
+5. Runs the governance job (governance rules have no operator resource), then starts the spacecraft and the
+   tool pods.
 
 Re-run it to roll out new versions.
 
@@ -228,6 +233,24 @@ make k8s-governance
 make k8s-topic CLIENT=director NAME=Houston
 ```
 
+### Mission control as Kubernetes resources
+
+On minikube, mission control lives in the cluster as `VirtualTopic`, `Client`, `Role` and `Group` resources,
+and the kawa operator keeps the gateway in sync with them. To see them and whether the gateway has them:
+
+```bash
+make k8s-resources
+```
+
+To change mission control, edit [`k8s/mission-control.yaml`](k8s/mission-control.yaml) and apply it again:
+
+```bash
+kubectl --context kawa-demo -n kawa-demo apply -f k8s/mission-control.yaml
+```
+
+Studio shows the same topics, clients and RBAC. The operator owns them, so change them in the resources, not in
+Studio: the operator reverts changes made elsewhere.
+
 To see each pod and the image it runs:
 
 ```bash
@@ -248,7 +271,7 @@ minikube delete -p kawa-demo
 | `Makefile`                  | Every entry point (`make help`)                                                                                                       |
 | `config/gateway.yaml`       | Startup config of the Compose gateway (minikube: the chart renders it)                                                                |
 | `compose/`                  | `docker-compose.yml`                                                                                                                  |
-| `k8s/`                      | Kafka, schema registry and demo workloads; chart values; up/down/forward scripts                                                      |
+| `k8s/`                      | Kafka, schema registry and demo workloads; mission control as operator resources; the governance job; chart values; up/down/forward scripts |
 | `scripts/`                  | `token.sh` (headless admin login), `gateway-init.sh`, `governance.sh`, the telemetry and state vector producers, and the Kafka client scripts |
 | `clients/`                  | SASL client configs for spacecraft, director, systems and navigator                                                                            |
 | `schemas/state-vector.avsc` | Avro schema of the state vectors                                                                                                      |
@@ -259,13 +282,18 @@ Every component is pinned in [`versions.env`](versions.env):
 
 ```
 GATEWAY_IMAGE=ghcr.io/kawa-platform/kawa-gateway
-GATEWAY_VERSION=0.1.0-rc.2
+GATEWAY_VERSION=0.1.0-rc.3
 STUDIO_IMAGE=ghcr.io/kawa-platform/kawa-studio
-STUDIO_VERSION=0.1.0-rc.1
+STUDIO_VERSION=0.1.0-rc.3
+OPERATOR_IMAGE=ghcr.io/kawa-platform/kawa-operator
+OPERATOR_VERSION=0.1.0-rc.3
 KAFKA_VERSION=4.3.1
 SCHEMA_REGISTRY_VERSION=8.0.0
-KAWA_CHART=../kawa-charts/charts/kawa
+KAWA_CHART=oci://ghcr.io/kawa-platform/charts/kawa
+KAWA_CHART_VERSION=0.1.0-rc.2
 ```
+
+The operator runs on minikube only.
 
 To pin a version for good, edit the file. To override one for a single run, set it on the command
 line or in the shell; those values win over the file:

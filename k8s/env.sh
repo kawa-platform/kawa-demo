@@ -10,6 +10,8 @@ MINIKUBE_PROFILE="${MINIKUBE_PROFILE:-kawa-demo}"
 NAMESPACE="${NAMESPACE:-kawa-demo}"
 RELEASE="${RELEASE:-kawa}"
 SUBST_VARS='${KAFKA_IMAGE} ${KAFKA_TOOLS_IMAGE} ${KAFKA_VERSION} ${SCHEMA_REGISTRY_IMAGE} ${SCHEMA_REGISTRY_VERSION}'
+# The operator's resource kinds, fully qualified: roles and groups alone would mean Kubernetes RBAC.
+KAWA_KINDS=virtualtopics.kawa.kawa-platform.github.io,clients.kawa.kawa-platform.github.io,roles.kawa.kawa-platform.github.io,groups.kawa.kawa-platform.github.io
 mk() { minikube -p "$MINIKUBE_PROFILE" "$@"; }
 kc() { kubectl --context "$MINIKUBE_PROFILE" -n "$NAMESPACE" "$@"; }
 step() { printf '\n\033[1m── %s\033[0m\n' "$*"; }
