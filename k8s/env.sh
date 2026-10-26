@@ -9,6 +9,7 @@ done < "$DEMO_DIR/versions.env"
 MINIKUBE_PROFILE="${MINIKUBE_PROFILE:-kawa-demo}"
 NAMESPACE="${NAMESPACE:-kawa-demo}"
 RELEASE="${RELEASE:-kawa}"
+OPERATOR_RELEASE="${OPERATOR_RELEASE:-kawa-operator}"
 SUBST_VARS='${KAFKA_IMAGE} ${KAFKA_TOOLS_IMAGE} ${KAFKA_VERSION} ${SCHEMA_REGISTRY_IMAGE} ${SCHEMA_REGISTRY_VERSION}'
 # The operator's resource kinds, fully qualified: roles and groups alone would mean Kubernetes RBAC.
 KAWA_KINDS=virtualtopics.kawa.kawa-platform.github.io,clients.kawa.kawa-platform.github.io,roles.kawa.kawa-platform.github.io,groups.kawa.kawa-platform.github.io

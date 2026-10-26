@@ -180,8 +180,9 @@ make k8s-up
    change it). It uses the kubectl context of the same name, so your other clusters stay untouched.
    Resources: `MINIKUBE_CPUS` (default 4) and `MINIKUBE_MEMORY` (default 4g).
 2. Installs Kafka and the schema registry ([`k8s/`](k8s)) in the namespace `kawa-demo`.
-3. Installs the kawa chart (gateway, studio and the kawa operator) with
-   [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml) and the versions from `versions.env`.
+3. Installs the kawa chart (gateway and studio) with [`k8s/values-minikube.yaml`](k8s/values-minikube.yaml)
+   and the kawa-operator chart with [`k8s/operator-values-minikube.yaml`](k8s/operator-values-minikube.yaml),
+   both with the versions from `versions.env`.
 4. Applies mission control as operator resources ([`k8s/mission-control.yaml`](k8s/mission-control.yaml)):
    the virtual topics, SASL clients, RBAC roles and groups. The operator writes them to the gateway, and
    `make k8s-up` waits until each one is Ready.
@@ -287,10 +288,11 @@ STUDIO_IMAGE=ghcr.io/kawa-platform/kawa-studio
 STUDIO_VERSION=0.1.0-rc.3
 OPERATOR_IMAGE=ghcr.io/kawa-platform/kawa-operator
 OPERATOR_VERSION=0.1.0-rc.3
+OPERATOR_CHART=oci://ghcr.io/kawa-platform/charts/kawa-operator
 KAFKA_VERSION=4.3.1
 SCHEMA_REGISTRY_VERSION=8.0.0
 KAWA_CHART=oci://ghcr.io/kawa-platform/charts/kawa
-KAWA_CHART_VERSION=0.1.0-rc.2
+KAWA_CHART_VERSION=0.1.0-rc.4
 ```
 
 The operator runs on minikube only.

@@ -1,0 +1,10 @@
+# kawa-operator chart values for the minikube demo. Image repository and tag are not set here:
+# k8s/up.sh passes them from versions.env.
+#
+# The operator applies k8s/mission-control.yaml (virtual topics, SASL clients, RBAC) to the gateway.
+image:
+  pullPolicy: IfNotPresent
+gateway:
+  adminUrl: http://kawa-gateway:8080
+  auth:
+    existingSecret: kawa-operator-client

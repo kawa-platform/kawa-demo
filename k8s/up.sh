@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Starts mission control on minikube: Kafka, a schema registry, the kawa chart (gateway, studio and the
-# operator), mission control as operator resources, the governance rules, the spacecraft and tool pods.
+# Starts mission control on minikube: Kafka, a schema registry, the kawa chart (gateway and studio), the
+# kawa-operator chart, mission control as operator resources, the governance rules, the spacecraft and tool pods.
 # Idempotent: re-run it to apply new versions.
 #
 #   k8s/up.sh
@@ -37,32 +37,40 @@ kc rollout status statefulset/kafka --timeout=600s
 kc wait --for=condition=complete job/kafka-topics-init --timeout=600s
 kc rollout status deployment/schema-registry --timeout=600s
 
-step "⎈  kawa chart $KAWA_CHART${KAWA_CHART_VERSION:+ $KAWA_CHART_VERSION} ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION, operator $OPERATOR_VERSION"
+step "⎈  kawa chart $KAWA_CHART${KAWA_CHART_VERSION:+ $KAWA_CHART_VERSION} ($RELEASE): gateway $GATEWAY_VERSION, studio $STUDIO_VERSION"
 # The gateway and the operator share the operator client's secret. Demo only: a fixed value.
 kc create secret generic kawa-operator-client --from-literal=client-secret=kawa-operator-secret \
     --dry-run=client -o yaml | kc apply -f - >/dev/null
-chart="$KAWA_CHART"
-[[ "$chart" == ../* || "$chart" == ./* ]] && chart="$DEMO_DIR/$chart"
-chart_args=()
-if [ -d "$chart" ]; then
-    # A local chart: fetch its subcharts (the gateway and operator charts).
-    helm dependency update "$chart" >/dev/null
-elif [ -n "${KAWA_CHART_VERSION:-}" ]; then
-    chart_args+=(--version "$KAWA_CHART_VERSION")
-fi
-helm upgrade --install "$RELEASE" "$chart" ${chart_args[@]+"${chart_args[@]}"} \
+# chart_ref <chart> <version>: sets CHART and CHART_ARGS for helm. A local directory (relative to the
+# demo) is used as is; a repository or OCI reference gets --version.
+chart_ref() {
+    CHART="$1"; CHART_ARGS=()
+    [[ "$CHART" == ../* || "$CHART" == ./* ]] && CHART="$DEMO_DIR/$CHART"
+    if [ ! -d "$CHART" ] && [ -n "$2" ]; then CHART_ARGS+=(--version "$2"); fi
+}
+chart_ref "$KAWA_CHART" "${KAWA_CHART_VERSION:-}"
+helm upgrade --install "$RELEASE" "$CHART" ${CHART_ARGS[@]+"${CHART_ARGS[@]}"} \
     --kube-context "$MINIKUBE_PROFILE" -n "$NAMESPACE" \
     -f "$DEMO_DIR/k8s/values-minikube.yaml" \
-    --set kawa-gateway.gateway.image.repository="$GATEWAY_IMAGE",kawa-gateway.gateway.image.tag="$GATEWAY_VERSION" \
-    --set kawa-gateway.studio.image.repository="$STUDIO_IMAGE",kawa-gateway.studio.image.tag="$STUDIO_VERSION" \
-    --set kawa-operator.image.repository="$OPERATOR_IMAGE",kawa-operator.image.tag="$OPERATOR_VERSION" \
+    --set gateway.image.repository="$GATEWAY_IMAGE",gateway.image.tag="$GATEWAY_VERSION" \
+    --set studio.image.repository="$STUDIO_IMAGE",studio.image.tag="$STUDIO_VERSION" \
+    --wait --timeout 5m
+
+step "⎈  kawa-operator chart $OPERATOR_CHART ($OPERATOR_RELEASE): operator $OPERATOR_VERSION"
+# The operator chart is published with the operator's version, so OPERATOR_VERSION is also the chart
+# version. With OPERATOR_VERSION=local, point OPERATOR_CHART at the operator checkout's chart.
+chart_ref "$OPERATOR_CHART" "$([ "$OPERATOR_VERSION" = local ] || echo "$OPERATOR_VERSION")"
+helm upgrade --install "$OPERATOR_RELEASE" "$CHART" ${CHART_ARGS[@]+"${CHART_ARGS[@]}"} \
+    --kube-context "$MINIKUBE_PROFILE" -n "$NAMESPACE" \
+    -f "$DEMO_DIR/k8s/operator-values-minikube.yaml" \
+    --set image.repository="$OPERATOR_IMAGE",image.tag="$OPERATOR_VERSION" \
     --wait --timeout 5m
 
 step "🛰️  mission control (operator resources)"
 kc apply -f "$DEMO_DIR/k8s/mission-control.yaml"
 if ! kc wait --for=condition=Ready $KAWA_KINDS --all --timeout=120s >/dev/null; then
     kc get $KAWA_KINDS -o wide
-    echo "💥 mission control is not Ready; see REASON above and: kubectl logs deploy/$RELEASE-kawa-operator" >&2
+    echo "💥 mission control is not Ready; see REASON above and: kubectl logs deploy/$OPERATOR_RELEASE" >&2
     exit 1
 fi
 kc get $KAWA_KINDS

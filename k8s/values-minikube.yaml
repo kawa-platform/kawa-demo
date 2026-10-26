@@ -1,72 +1,62 @@
-# kawa chart overrides for the minikube demo. Image repositories and tags are not set here:
+# kawa chart values for the minikube demo. Image repositories and tags are not set here:
 # k8s/up.sh passes them from versions.env.
 
-kawa-gateway:
-  # The gateway config is config/gateway.yaml (the compose demo's), written out here because a Helm
-  # values file cannot include another file. Three things differ on minikube: `advertised` is left to the
-  # chart (the Service's DNS name, which the tool pods use as their bootstrap address), the browser
-  # reaches Studio and the admin API through the port-forwards (k8s/forward.sh), so the login URL and
-  # CORS origin point at localhost:5173, and the operator client is enabled.
-  gateway:
-    image:
-      pullPolicy: IfNotPresent
-
-    # Demo only: the bootstrap admin is admin@kawa / admin. k8s/admin.sh and the governance job read it
-    # from the chart's Secret.
-    secrets:
-      adminPassword: admin
-
-    # The operator's client secret, from the Secret kawa-operator-client that k8s/up.sh creates.
-    extraEnv:
-      - name: KAWA_OPERATOR_SECRET
-        valueFrom:
-          secretKeyRef:
-            name: kawa-operator-client
-            key: client-secret
-
-    config:
-      listeners:
-        - host: 0.0.0.0
-          port: 9092
-
-      clusters:
-        default:
-          bootstrapServers:
-            - kafka:9092
-          # Used by virtual topics with valueFormat avro (navigation.artemis).
-          schemaRegistry:
-            url: http://schema-registry:8081
-
-      admin:
-        enabled: true
-        host: 0.0.0.0
-        port: 8080
-        # Login: admin@kawa / admin through kawa studio. Tokens are signed with the chart's generated
-        # signing key, which stays across upgrades. The operator logs in as the client kawa-operator.
-        auth:
-          type: oauth
-          bootstrapUser:
-            username: admin@kawa
-            password: ${KAWA_ADMIN_PASSWORD}
-          settings:
-            loginUrl: http://localhost:5173/admin/login
-            redirectUris:
-              - http://localhost:5173/admin/auth/callback
-            signingKey: ${KAWA_SIGNING_KEY}
-            operatorSecret: ${KAWA_OPERATOR_SECRET}
-        cors:
-          allowedOrigins:
-            - http://localhost:5173
-
-  studio:
-    image:
-      pullPolicy: IfNotPresent
-
-# The operator applies k8s/mission-control.yaml (virtual topics, SASL clients, RBAC) to the gateway.
-kawa-operator:
+# The gateway config is config/gateway.yaml (the compose demo's), written out here because a Helm
+# values file cannot include another file. Three things differ on minikube: `advertised` is left to the
+# chart (the Service's DNS name, which the tool pods use as their bootstrap address), the browser
+# reaches Studio and the admin API through the port-forwards (k8s/forward.sh), so the login URL and
+# CORS origin point at localhost:5173, and the operator client is enabled.
+gateway:
   image:
     pullPolicy: IfNotPresent
-  gateway:
-    adminUrl: http://kawa-gateway:8080
-    auth:
-      existingSecret: kawa-operator-client
+
+  # Demo only: the bootstrap admin is admin@kawa / admin. k8s/admin.sh and the governance job read it
+  # from the chart's Secret.
+  secrets:
+    adminPassword: admin
+
+  # The operator's client secret, from the Secret kawa-operator-client that k8s/up.sh creates.
+  extraEnv:
+    - name: KAWA_OPERATOR_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: kawa-operator-client
+          key: client-secret
+
+  config:
+    listeners:
+      - host: 0.0.0.0
+        port: 9092
+
+    clusters:
+      default:
+        bootstrapServers:
+          - kafka:9092
+        # Used by virtual topics with valueFormat avro (navigation.artemis).
+        schemaRegistry:
+          url: http://schema-registry:8081
+
+    admin:
+      enabled: true
+      host: 0.0.0.0
+      port: 8080
+      # Login: admin@kawa / admin through kawa studio. Tokens are signed with the chart's generated
+      # signing key, which stays across upgrades. The operator logs in as the client kawa-operator.
+      auth:
+        type: oauth
+        bootstrapUser:
+          username: admin@kawa
+          password: ${KAWA_ADMIN_PASSWORD}
+        settings:
+          loginUrl: http://localhost:5173/admin/login
+          redirectUris:
+            - http://localhost:5173/admin/auth/callback
+          signingKey: ${KAWA_SIGNING_KEY}
+          operatorSecret: ${KAWA_OPERATOR_SECRET}
+      cors:
+        allowedOrigins:
+          - http://localhost:5173
+
+studio:
+  image:
+    pullPolicy: IfNotPresent

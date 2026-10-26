@@ -137,7 +137,7 @@ avro: ## Produce Avro state vectors to navigation.raw, then read navigation.arte
 
 ## Minikube
 .PHONY: k8s-up
-k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa chart with the operator, telemetry)
+k8s-up: $(LOCAL_BUILDS) ## Start mission control on minikube (Kafka, schema registry, kawa and kawa-operator charts, telemetry)
 	k8s/up.sh
 
 .PHONY: k8s-forward
