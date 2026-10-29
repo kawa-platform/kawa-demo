@@ -16,7 +16,7 @@
 # (exposePhysicalTopic) so the spacecraft can produce to them.
 
 # 🛰️ Virtual topics
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: VirtualTopic
 metadata:
   name: telemetry.alerts
@@ -28,7 +28,7 @@ spec:
     type: cel
     expression: 'value.severity in ["warning", "critical"]'
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: VirtualTopic
 metadata:
   name: navigation.artemis
@@ -51,7 +51,7 @@ stringData:
   systems: systems-secret
   navigator: navigator-secret
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Client
 metadata:
   name: spacecraft
@@ -59,7 +59,7 @@ spec:
   mechanism: PLAIN
   passwordSecretRef: {name: kawa-demo-client-passwords, key: spacecraft}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Client
 metadata:
   name: director
@@ -67,7 +67,7 @@ spec:
   mechanism: PLAIN
   passwordSecretRef: {name: kawa-demo-client-passwords, key: director}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Client
 metadata:
   name: systems
@@ -75,7 +75,7 @@ spec:
   mechanism: PLAIN
   passwordSecretRef: {name: kawa-demo-client-passwords, key: systems}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Client
 metadata:
   name: navigator
@@ -85,7 +85,7 @@ spec:
 ---
 # 🛡️ RBAC roles. DESCRIBE on the virtual names too: the gateway authorizes Metadata for an exposed
 # physical topic under its virtual name, so without it telemetry.raw never shows up for the spacecraft.
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Role
 metadata:
   name: flight-computer
@@ -102,7 +102,7 @@ spec:
     - {resource: {type: GROUP, pattern: spacecraft., patternType: PREFIXED}, operation: READ, permission: ALLOW}
     - {resource: {type: GROUP, pattern: spacecraft., patternType: PREFIXED}, operation: DESCRIBE, permission: ALLOW}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Role
 metadata:
   name: flight-director
@@ -119,7 +119,7 @@ spec:
     - {resource: {type: GROUP, pattern: director., patternType: PREFIXED}, operation: READ, permission: ALLOW}
     - {resource: {type: GROUP, pattern: director., patternType: PREFIXED}, operation: DESCRIBE, permission: ALLOW}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Role
 metadata:
   name: alerts-console
@@ -130,7 +130,7 @@ spec:
     - {resource: {type: GROUP, pattern: systems., patternType: PREFIXED}, operation: READ, permission: ALLOW}
     - {resource: {type: GROUP, pattern: systems., patternType: PREFIXED}, operation: DESCRIBE, permission: ALLOW}
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Role
 metadata:
   name: navigation-console
@@ -142,7 +142,7 @@ spec:
     - {resource: {type: GROUP, pattern: navigator., patternType: PREFIXED}, operation: DESCRIBE, permission: ALLOW}
 ---
 # 👩‍🚀 RBAC groups
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Group
 metadata:
   name: spacecraft
@@ -150,7 +150,7 @@ spec:
   clients: [spacecraft]
   roles: [flight-computer]
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Group
 metadata:
   name: flight-directors
@@ -158,7 +158,7 @@ spec:
   clients: [director]
   roles: [flight-director]
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Group
 metadata:
   name: systems-engineers
@@ -166,7 +166,7 @@ spec:
   clients: [systems]
   roles: [alerts-console]
 ---
-apiVersion: kawa.kawa-platform.github.io/v1alpha1
+apiVersion: kawa-platform.github.io/v1alpha1
 kind: Group
 metadata:
   name: navigation-officers
