@@ -287,12 +287,12 @@ GATEWAY_VERSION=0.1.0-rc.3
 STUDIO_IMAGE=ghcr.io/kawa-platform/kawa-studio
 STUDIO_VERSION=0.1.0-rc.3
 OPERATOR_IMAGE=ghcr.io/kawa-platform/kawa-operator
-OPERATOR_VERSION=0.1.0-rc.3
+OPERATOR_VERSION=0.1.0-rc.4
 OPERATOR_CHART=oci://ghcr.io/kawa-platform/charts/kawa-operator
 KAFKA_VERSION=4.3.1
 SCHEMA_REGISTRY_VERSION=8.0.0
 KAWA_CHART=oci://ghcr.io/kawa-platform/charts/kawa
-KAWA_CHART_VERSION=0.1.0-rc.4
+KAWA_CHART_VERSION=0.1.0-rc.6
 ```
 
 The operator runs on minikube only.
